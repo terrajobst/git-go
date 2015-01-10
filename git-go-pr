@@ -1,0 +1,58 @@
+#!/bin/bash
+
+#   Script to automatically open the web browser to prepare
+#   a pull request.
+#
+#   Supports GitHub and Visual Studio Online.
+
+source common
+
+branch=`git symbolic-ref HEAD`
+branch=${branch##refs/heads/}
+remote=`git config "branch.${branch}.remote"`
+upstreamUrl=`git config "remote.upstream.url"`
+
+# If the remote is empty, then it means no tracking branch exist
+# In that case, we default to origin.
+
+if [[ -z $remote  ]]
+then
+   remote="origin"
+fi
+
+# Now we can update our remote
+
+git push origin $branch -u
+
+# In system where folks don't have push permissions (such as GitHub)
+# it's common practice to use 'origin' as the remote of the fork and
+# 'upstream' for the central repository.
+#
+# We assume that if the remote 'upstream' exists, we use that for
+# the PR destination. Otherwise, we use the configured remote.
+
+if [[ -n $upstreamUrl ]]
+then
+   remote="upstream"
+fi
+
+remoteUrl=`git config "remote.${remote}.url"`
+remoteBranch=`git config "branch.${branch}.merge"`
+remoteBranch=${remoteBranch##refs/heads/}
+
+sourceBranch=$remoteBranch
+targetBranch='master'
+
+if [[ $remoteUrl == *"github.com"* ]]; then
+    # GitHub
+    url="$remoteUrl/compare/$targetBranch...$sourceBranch?expand=1"
+elif [[ $remoteUrl == *"visualstudio.com"* ]]
+then
+    # Visual Studio Online
+    url="$remoteUrl/pullrequests#targetRef=$targetBranch^&_a=createnew^&sourceRef=$sourceBranch"
+else
+    echo "Unknown remote: $remoteUrl"
+    exit
+fi
+
+open_in_browser

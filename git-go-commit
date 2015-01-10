@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#   Script to automatically open the web browser for the current
+#   commit.
+#
+#   Supports GitHub and Visual Studio Online.
+
+source common
+
+commitId=`git rev-parse HEAD`
+branch=`git symbolic-ref HEAD`
+branch=${branch##refs/heads/}
+remote=`git config "branch.${branch}.remote"`
+remoteUrl=`git config "remote.${remote}.url"`
+remoteBranch=`git config "branch.${branch}.merge"`
+remoteBranch=${remoteBranch##refs/heads/}
+
+if [[ $remoteUrl == *"github.com"* ]]; then
+    # GitHub
+    url="$remoteUrl/commit/$commitId"
+elif [[ $remoteUrl == *"visualstudio.com"* ]]
+then
+    # Visual Studio Online
+    url="$remoteUrl/commit/$commitId"
+else
+    echo "Unknown remote: $remoteUrl"
+    exit
+fi
+
+open_in_browser
