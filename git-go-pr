@@ -22,7 +22,7 @@ fi
 
 # Now we can update our remote
 
-git push origin $branch -u
+git push $remote $branch -u
 
 # In system where folks don't have push permissions (such as GitHub)
 # it's common practice to use 'origin' as the remote of the fork and
